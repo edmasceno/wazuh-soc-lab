@@ -1,32 +1,32 @@
-# Construindo um SOC com Wazuh (SIEM) 🛡️
+# Implementação de SOC com Wazuh (SIEM) 🛡️
 
-Neste laboratório, mudei o chapéu de "Atacante" para "Defensor". Meu objetivo foi criar um ambiente de monitoramento centralizado para detectar tentativas de intrusão em tempo real.
+Projeto focado na centralização de logs e monitoramento de ativos para detecção de intrusão em tempo real. O foco foi estabelecer a visibilidade sobre eventos de segurança em um endpoint Linux (Kali) utilizando a arquitetura Manager-Agent.
 
-Utilizei o **Wazuh**, uma das ferramentas de SIEM (Security Information and Event Management) mais usadas no mercado.
+## Arquitetura do Lab
+* **Wazuh Manager:** Instância central responsável pela correlação de eventos e geração de alertas.
+* **Wazuh Agent:** Implantado no Kali Linux para coleta e encaminhamento de logs via protocolo criptografado.
+* **Fluxo de Dados:** Monitoramento nativo de logs de sistema e integridade de arquivos (FIM).
 
-## ⚙️ Arquitetura do Lab
-* **Wazuh Server:** O servidor central que recebe e analisa os logs.
-* **Wazuh Agent:** Instalado na minha máquina Kali Linux para atuar como sensor de segurança.
-* **Integração:** O agente coleta logs do sistema operacional e envia para o servidor via rede criptografada.
+## Simulação de Ataque: Brute Force SSH
+Para validar as regras de correlação do Wazuh, realizei um teste de estresse no serviço de autenticação do agente:
 
-## 🚨 O Teste: Detecção de Brute Force
-Para validar se o monitoramento estava funcionando, simulei um ataque de força bruta no serviço SSH do agente:
-1.  Tentei login repetidamente com usuário inexistente (`hacker`) e senhas erradas.
-2.  O objetivo era gerar ruído nos logs de autenticação (`auth.log`).
+1. **Execução:** Simulação de múltiplas tentativas de login com usuários inválidos e dicionários de senhas.
+2. **Monitoramento:** Acompanhamento do `auth.log` no endpoint para garantir que as falhas estavam sendo registradas localmente.
+3. **Detecção:** O Wazuh Manager identificou o pico de falhas de autenticação (Event ID específico) e disparou um alerta de nível de severidade média/alta no dashboard.
 
-## 📸 Resultado: Alerta em Tempo Real
-O Wazuh detectou o padrão de falhas imediatamente. Como mostra o dashboard abaixo, ele registrou **6 falhas de autenticação** consecutivas, classificando o evento como suspeito.
+### Evidência de Detecção
+O dashboard abaixo confirma o registro de **6 tentativas de login inválidas**, correlacionando os eventos como uma possível tentativa de força bruta:
 
 ![Dashboard Wazuh](wazuh_dashboard_alert.png)
 
-## 🔧 Desafios de Implementação
-Configurar um SIEM envolve garantir que o Agente e o Servidor consigam se falar através da rede.
+## Troubleshooting e Ajustes de Rede
+Durante o deploy, enfrentei problemas de conectividade entre o agente e o manager devido ao isolamento das VMs.
 
-* **O Problema:** Garantir a comunicação entre o Kali Linux (Agente) e o Wazuh Server em um ambiente virtualizado.
-* **A Solução:** Configurei a rede das máquinas virtuais em modo **Bridge** para garantir que ambas recebessem IPs válidos na mesma sub-rede, permitindo o envio de logs na porta 1514/TCP.
+* **Desafio:** O agente não conseguia realizar o handshake com o servidor na porta 1514/TCP.
+* **Resolução:** Ajustei a interface de rede de ambas as máquinas para o modo **Bridge**, garantindo que estivessem no mesmo barramento de camada 2. Isso permitiu a atribuição de IPs na mesma sub-rede e a comunicação direta para o envio dos buffers de log.
 
-## 🧠 Aprendizado
-Este projeto me permitiu entender na prática como funciona a rotina de um **Analista de SOC**: não basta apenas ter logs, é preciso ter uma ferramenta que correleciona esses dados e gera visualizações úteis para tomada de decisão.
+## Conclusão Técnica
+A prática demonstrou a importância da correlação de eventos. Em um cenário real, logs isolados são difíceis de auditar; com o SIEM, conseguimos transformar ruído de rede em inteligência acionável para resposta a incidentes.
 
 ---
-*Projeto de estudo em Blue Team.*
+*Laboratório focado em Blue Team e Operações de Segurança.*
